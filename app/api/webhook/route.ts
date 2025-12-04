@@ -68,11 +68,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ message: 'Webhook processed' }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error processing webhook:', error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Webhook processing failed',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }

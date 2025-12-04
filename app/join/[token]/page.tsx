@@ -30,7 +30,7 @@ type ClubInfo = {
 export default function JoinClubPage({ params }: { params: Promise<{ token: string }> }) {
     const { token } = use(params);
     const router = useRouter();
-    const { user, isLoaded, isSignedIn } = useUser();
+    const { isLoaded, isSignedIn } = useUser();
 
     const [club, setClub] = useState<ClubInfo | null>(null);
     const [loading, setLoading] = useState(true);
@@ -136,7 +136,7 @@ export default function JoinClubPage({ params }: { params: Promise<{ token: stri
                         <h1 className={`text-4xl ${serifBold} mb-4`} style={{ color: secondaryColor }}>
                             🎉 Welcome!
                         </h1>
-                        <p className="text-xl text-gray-700 mb-2">You've successfully joined</p>
+                        <p className="text-xl text-gray-700 mb-2">You&apos;ve successfully joined</p>
                         <p className={`text-2xl ${serifMedium} mb-6`} style={{ color: primaryColor }}>
                             {club?.name}
                         </p>
@@ -156,7 +156,7 @@ export default function JoinClubPage({ params }: { params: Promise<{ token: stri
                     {/* Header */}
                     <div className="text-center mb-8">
                         <h1 className={`text-4xl ${serifBold} mb-2`} style={{ color: primaryColor }}>
-                            You're Invited!
+                            You&apos;re Invited!
                         </h1>
                         <p className="text-gray-600">Join this club and become part of the community</p>
                     </div>

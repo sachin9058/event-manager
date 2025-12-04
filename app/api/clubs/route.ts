@@ -46,16 +46,16 @@ export async function POST(req: NextRequest) {
       message: 'Club created successfully',
       club: populatedClub 
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating club:', error);
     return NextResponse.json({ 
       error: 'Failed to create club',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     await connectDB();
 
@@ -65,10 +65,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Try to find the user in database
     const dbUser = await User.findOne({ clerkId: user.id });
 
+    // If user doesn't exist in DB yet, create them first
     if (!dbUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      const newUser = await User.create({
+        clerkId: user.id,
+        email: user.emailAddresses[0]?.emailAddress || '',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        imageUrl: user.imageUrl || '',
+      });
+
+      // Return empty clubs array for new user
+      return NextResponse.json({ clubs: [] }, { status: 200 });
     }
 
     const clubs = await Club.find({ 
@@ -82,11 +93,11 @@ export async function GET(req: NextRequest) {
     .sort({ createdAt: -1 });
 
     return NextResponse.json({ clubs }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching clubs:', error);
     return NextResponse.json({ 
       error: 'Failed to fetch clubs',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }

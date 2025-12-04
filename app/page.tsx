@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React from 'react';
 import Head from 'next/head';
 import Navbar from '@/components/Navbar';
 import Image from 'next/image';
@@ -12,7 +12,6 @@ const PremiumEventPlanner = () => {
   const backgroundColor = '#FAF9F8'; // Off-white/Cream for warmth
 
   const serifBold = 'font-serif font-extrabold';
-  const serifMedium = 'font-serif font-medium';
 
   return (
     <>
@@ -94,7 +93,7 @@ const PremiumEventPlanner = () => {
               We specialize in the complex coordination required for major campus events—from securing headline artists and managing large-scale infrastructure to navigating university compliance and maximizing sponsor ROI. We handle the rigor; your club owns the spotlight.
             </p>
             <p className="text-base md:text-lg text-gray-600 leading-7 md:leading-8 font-light italic">
-              "Focus on inspiring your peers. We will ensure the experience is seamless and unforgettable."
+              &ldquo;Focus on inspiring your peers. We will ensure the experience is seamless and unforgettable.&rdquo;
             </p>
           </div>
         </section>
@@ -103,7 +102,7 @@ const PremiumEventPlanner = () => {
         <section className={`py-16 md:py-24 lg:py-32 text-white`} style={{ backgroundColor: primaryColor }}>
           <div className="container mx-auto px-6 lg:px-12 text-center mb-10 md:mb-16">
              <h2 className={`text-3xl md:text-4xl ${serifBold} mb-3 md:mb-4 tracking-wider`}>Our Signature Collections for Campus</h2>
-             <p className="text-base md:text-lg opacity-80 font-light">Tailored services for your club's highest ambitions.</p>
+             <p className="text-base md:text-lg opacity-80 font-light">Tailored services for your club&apos;s highest ambitions.</p>
           </div>
           <div className="container mx-auto px-6 lg:px-12">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">

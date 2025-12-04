@@ -208,7 +208,7 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                     setInviteLink(data.inviteLink);
                 }
             }
-        } catch (e) {
+        } catch {
             console.error("Failed to fetch invite link");
         }
     }

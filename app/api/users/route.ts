@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
 import { currentUser } from '@clerk/nextjs/server';
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     await connectDB();
 
@@ -34,16 +34,16 @@ export async function POST(req: NextRequest) {
       message: 'User created successfully',
       user: newUser 
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating user:', error);
     return NextResponse.json({ 
       error: 'Failed to create user',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     await connectDB();
 
@@ -60,11 +60,11 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ user: dbUser }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching user:', error);
     return NextResponse.json({ 
       error: 'Failed to fetch user',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
