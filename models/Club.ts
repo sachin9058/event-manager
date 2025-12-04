@@ -8,6 +8,7 @@ export interface IClub extends Document {
   members: mongoose.Types.ObjectId[];
   logo?: string;
   isActive: boolean;
+  inviteToken?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +47,11 @@ const ClubSchema: Schema<IClub> = new Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    inviteToken: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
   },
   {

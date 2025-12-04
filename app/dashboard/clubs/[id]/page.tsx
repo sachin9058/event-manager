@@ -71,12 +71,21 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [inviteLink, setInviteLink] = useState<string | null>(null);
+    const [showInviteModal, setShowInviteModal] = useState(false);
 
     useEffect(() => {
         if (!id) return;
         fetchClub();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
+
+    useEffect(() => {
+        if (club && isOwner()) {
+            fetchInviteLink();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [club]);
 
     async function fetchClub() {
         setLoading(true);
@@ -166,6 +175,42 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
         }
     }
 
+    async function handleGenerateInviteLink() {
+        setActionLoading(true);
+        try {
+            const res = await fetch(`/api/clubs/${id}/invite`, { method: "POST" });
+            if (!res.ok) throw new Error("Failed to generate invite link");
+            const data = await res.json();
+            setInviteLink(data.inviteLink);
+            setShowInviteModal(true);
+        } catch (e: any) {
+            setError(e.message || "Failed to generate invite link");
+        } finally {
+            setActionLoading(false);
+        }
+    }
+
+    async function fetchInviteLink() {
+        try {
+            const res = await fetch(`/api/clubs/${id}/invite`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.inviteLink) {
+                    setInviteLink(data.inviteLink);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to fetch invite link");
+        }
+    }
+
+    function copyInviteLink() {
+        if (inviteLink) {
+            navigator.clipboard.writeText(inviteLink);
+            alert("Invite link copied to clipboard!");
+        }
+    }
+
     if (loading) return <div className="p-12 text-lg" style={{ backgroundColor }}>Loading club data...</div>;
     if (!club) return <div className="p-12 text-lg" style={{ backgroundColor }}>Club not found.</div>;
 
@@ -197,6 +242,20 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
 
                         {/* Action Buttons */}
                         <div className="text-right flex flex-col space-y-2">
+                            {isOwner() && (
+                                <PrimaryActionButton
+                                    onClick={() => {
+                                        if (inviteLink) {
+                                            copyInviteLink();
+                                        } else {
+                                            handleGenerateInviteLink();
+                                        }
+                                    }}
+                                    disabled={actionLoading}
+                                >
+                                    {inviteLink ? "📋 Copy Invite Link" : "🔗 Generate Invite Link"}
+                                </PrimaryActionButton>
+                            )}
                             <PrimaryActionButton
                                 onClick={handleJoinLeave}
                                 disabled={actionLoading}
@@ -216,6 +275,34 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                         </div>
                     </div>
                 </div>
+
+                {/* Invite Link Modal */}
+                {showInviteModal && inviteLink && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowInviteModal(false)}>
+                        <div className="bg-white rounded-xl p-8 max-w-lg w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                            <h3 className={`text-2xl ${serifBold} mb-4`} style={{ color: primaryColor }}>Invite Link Generated</h3>
+                            <p className="text-sm text-gray-600 mb-4">Share this link with members to join your club:</p>
+                            <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
+                                <code className="text-sm break-all text-gray-800">{inviteLink}</code>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={copyInviteLink}
+                                    className="px-6 py-2 rounded-lg text-white font-medium flex-1"
+                                    style={{ backgroundColor: secondaryColor }}
+                                >
+                                    Copy Link
+                                </button>
+                                <button
+                                    onClick={() => setShowInviteModal(false)}
+                                    className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Members Section */}
                 <section className="bg-white rounded-2xl p-6 md:p-8 shadow-xl">
