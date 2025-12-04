@@ -73,6 +73,15 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
     const [error, setError] = useState<string | null>(null);
     const [inviteLink, setInviteLink] = useState<string | null>(null);
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [showCertificateModal, setShowCertificateModal] = useState(false);
+    const [certificateForm, setCertificateForm] = useState({
+        eventName: '',
+        eventDate: '',
+        collegeName: '',
+        position: 'Participant',
+        selectedMembers: [] as string[],
+    });
+    const [certificateResults, setCertificateResults] = useState<any>(null);
 
     useEffect(() => {
         if (!id) return;
@@ -211,6 +220,70 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
         }
     }
 
+    async function handleGenerateCertificates() {
+        if (!certificateForm.eventName || !certificateForm.eventDate || !certificateForm.collegeName) {
+            alert("Please fill in all required fields");
+            return;
+        }
+
+        setActionLoading(true);
+        setError(null);
+        setCertificateResults(null);
+
+        try {
+            const payload = {
+                eventName: certificateForm.eventName,
+                eventDate: certificateForm.eventDate,
+                collegeName: certificateForm.collegeName,
+                position: certificateForm.position,
+                memberIds: certificateForm.selectedMembers.length > 0 ? certificateForm.selectedMembers : undefined,
+            };
+
+            const res = await fetch(`/api/clubs/${id}/certificates`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Failed to generate certificates");
+            }
+
+            const data = await res.json();
+            setCertificateResults(data.results);
+            alert(`Certificates sent! Success: ${data.results.success}, Failed: ${data.results.failed}`);
+        } catch (e: any) {
+            setError(e.message || "Failed to generate certificates");
+        } finally {
+            setActionLoading(false);
+        }
+    }
+
+    function toggleMemberSelection(memberId: string) {
+        setCertificateForm(prev => ({
+            ...prev,
+            selectedMembers: prev.selectedMembers.includes(memberId)
+                ? prev.selectedMembers.filter(id => id !== memberId)
+                : [...prev.selectedMembers, memberId]
+        }));
+    }
+
+    function selectAllMembers() {
+        if (!club) return;
+        setCertificateForm(prev => ({
+            ...prev,
+            selectedMembers: club.members.map(m => m._id)
+        }));
+    }
+
+    function deselectAllMembers() {
+        setCertificateForm(prev => ({
+            ...prev,
+            selectedMembers: []
+        }));
+    }
+
     if (loading) return <div className="p-12 text-lg" style={{ backgroundColor }}>Loading club data...</div>;
     if (!club) return <div className="p-12 text-lg" style={{ backgroundColor }}>Club not found.</div>;
 
@@ -226,7 +299,7 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
 
                     <div className="flex justify-between items-start flex-wrap">
                         {/* Club Info */}
-                        <div className="flex-grow min-w-[50%] mb-4 md:mb-0">
+                        <div className="grow min-w-[50%] mb-4 md:mb-0">
                             <h1 className={`text-4xl ${serifBold} mb-1`} style={{ color: primaryColor }}>{club.name}</h1>
                             <p className="text-sm text-gray-700 italic">{club.description || "No detailed mission statement provided."}</p>
 
@@ -243,18 +316,26 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                         {/* Action Buttons */}
                         <div className="text-right flex flex-col space-y-2">
                             {isOwner() && (
-                                <PrimaryActionButton
-                                    onClick={() => {
-                                        if (inviteLink) {
-                                            copyInviteLink();
-                                        } else {
-                                            handleGenerateInviteLink();
-                                        }
-                                    }}
-                                    disabled={actionLoading}
-                                >
-                                    {inviteLink ? "📋 Copy Invite Link" : "🔗 Generate Invite Link"}
-                                </PrimaryActionButton>
+                                <>
+                                    <PrimaryActionButton
+                                        onClick={() => setShowCertificateModal(true)}
+                                        disabled={actionLoading || club.members.length === 0}
+                                    >
+                                        📜 Generate Certificates
+                                    </PrimaryActionButton>
+                                    <PrimaryActionButton
+                                        onClick={() => {
+                                            if (inviteLink) {
+                                                copyInviteLink();
+                                            } else {
+                                                handleGenerateInviteLink();
+                                            }
+                                        }}
+                                        disabled={actionLoading}
+                                    >
+                                        {inviteLink ? "📋 Copy Invite Link" : "🔗 Generate Invite Link"}
+                                    </PrimaryActionButton>
+                                </>
                             )}
                             <PrimaryActionButton
                                 onClick={handleJoinLeave}
@@ -295,6 +376,147 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                                 </button>
                                 <button
                                     onClick={() => setShowInviteModal(false)}
+                                    className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Certificate Generation Modal */}
+                {showCertificateModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" onClick={() => setShowCertificateModal(false)}>
+                        <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 my-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                            <h3 className={`text-2xl ${serifBold} mb-6`} style={{ color: primaryColor }}>Generate Certificates</h3>
+                            
+                            {/* Form */}
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Event Name *</label>
+                                    <input
+                                        type="text"
+                                        value={certificateForm.eventName}
+                                        onChange={(e) => setCertificateForm({ ...certificateForm, eventName: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-50"
+                                        placeholder="e.g., Annual Tech Fest 2024"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Event Date *</label>
+                                    <input
+                                        type="date"
+                                        value={certificateForm.eventDate}
+                                        onChange={(e) => setCertificateForm({ ...certificateForm, eventDate: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-50"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">College Name *</label>
+                                    <input
+                                        type="text"
+                                        value={certificateForm.collegeName}
+                                        onChange={(e) => setCertificateForm({ ...certificateForm, collegeName: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-50"
+                                        placeholder="e.g., ABC University"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Position/Role</label>
+                                    <select
+                                        value={certificateForm.position}
+                                        onChange={(e) => setCertificateForm({ ...certificateForm, position: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-50"
+                                    >
+                                        <option value="Participant">Participant</option>
+                                        <option value="Winner">Winner</option>
+                                        <option value="Runner-up">Runner-up</option>
+                                        <option value="Organizer">Organizer</option>
+                                        <option value="Volunteer">Volunteer</option>
+                                        <option value="Speaker">Speaker</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Members</label>
+                                    <div className="flex gap-2 mb-2">
+                                        <button
+                                            onClick={selectAllMembers}
+                                            className="text-sm px-3 py-1 border rounded hover:bg-gray-50"
+                                            type="button"
+                                        >
+                                            Select All
+                                        </button>
+                                        <button
+                                            onClick={deselectAllMembers}
+                                            className="text-sm px-3 py-1 border rounded hover:bg-gray-50"
+                                            type="button"
+                                        >
+                                            Deselect All
+                                        </button>
+                                        <span className="text-sm text-gray-600 ml-auto self-center">
+                                            {certificateForm.selectedMembers.length} of {club?.members.length} selected
+                                        </span>
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 space-y-2">
+                                        {club?.members.map(m => (
+                                            <label key={m._id} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={certificateForm.selectedMembers.includes(m._id)}
+                                                    onChange={() => toggleMemberSelection(m._id)}
+                                                    className="w-4 h-4"
+                                                />
+                                                <span className="text-sm">
+                                                    {m.firstName && m.lastName ? `${m.firstName} ${m.lastName}` : m.email}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                        Leave unselected to send certificates to all members
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Results */}
+                            {certificateResults && (
+                                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <h4 className="font-medium text-blue-900 mb-2">Results</h4>
+                                    <p className="text-sm text-blue-800">
+                                        ✅ Successfully sent: {certificateResults.success}<br />
+                                        ❌ Failed: {certificateResults.failed}<br />
+                                        📧 Total: {certificateResults.total}
+                                    </p>
+                                </div>
+                            )}
+
+                            {error && (
+                                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                    <p className="text-sm text-red-700">{error}</p>
+                                </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleGenerateCertificates}
+                                    disabled={actionLoading}
+                                    className="px-6 py-2 rounded-lg text-white font-medium flex-1 disabled:opacity-50"
+                                    style={{ backgroundColor: secondaryColor }}
+                                >
+                                    {actionLoading ? "Generating & Sending..." : "Generate & Send Certificates"}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowCertificateModal(false);
+                                        setCertificateResults(null);
+                                        setError(null);
+                                    }}
                                     className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
                                 >
                                     Close

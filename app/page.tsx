@@ -26,7 +26,7 @@ const PremiumEventPlanner = () => {
         <Navbar />
         
         {/* Hero Section (Responsive) */}
-        <section className="relative w-full h-[500px] md:h-[650px] lg:h-[800px] overflow-hidden bg-gradient-to-br from-purple-900 via-red-900 to-orange-900">
+        <section className="relative w-full h-[500px] md:h-[650px] lg:h-[800px] overflow-hidden bg-linear-to-br from-purple-900 via-red-900 to-orange-900">
           {/* Animated background pattern */}
           <div className="absolute inset-0 opacity-20">
             <div className="absolute top-0 left-0 w-96 h-96 bg-yellow-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
