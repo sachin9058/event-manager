@@ -11,21 +11,6 @@ Make sure ALL environment variables are added to your Vercel project:
 ### 2. Add These Variables:
 
 ```env
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_d2FybS1ibHVlamF5LTk5LmNsZXJrLmFjY291bnRzLmRldiQ
-CLERK_SECRET_KEY=sk_test_DvKV8J7IZTjO9dwaCbj6txC4RA0f1s7AoEYBP3XMNN
-CLERK_WEBHOOK_SECRET=(your_webhook_secret)
-
-# MongoDB
-MONGO_DB_URI=mongodb+srv://luciferdb:luciferdb@cluster0.j2gm7wb.mongodb.net/?appName=Cluster0
-
-# Email Service
-EMAIL_USER=luciferzx136@gmail.com
-EMAIL_PASSWORD=otep guwn yfpo jzqm
-EMAIL_FROM_NAME=Event Manager
-
-# App URL (important for invite links)
-NEXT_PUBLIC_APP_URL=https://fest-architects.vercel.app
 ```
 
 **Important Notes:**
@@ -42,10 +27,6 @@ NEXT_PUBLIC_APP_URL=https://fest-architects.vercel.app
 4. Select **Allow Access from Anywhere** (0.0.0.0/0)
    - OR add Vercel's specific IP ranges
 
-### Connection String:
-- Make sure your MongoDB URI includes the database name
-- Current format: `mongodb+srv://username:password@cluster.mongodb.net/?appName=Cluster0`
-- Recommended format: `mongodb+srv://username:password@cluster.mongodb.net/eventmanager?retryWrites=true&w=majority`
 
 ## 🔐 Clerk Webhook Setup
 
