@@ -4,6 +4,8 @@ import React from 'react';
 import Head from 'next/head';
 import Navbar from '@/components/Navbar';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const PremiumEventPlanner = () => {
   // Define a richer, more luxurious color palette
@@ -12,6 +14,8 @@ const PremiumEventPlanner = () => {
   const backgroundColor = '#FAF9F8'; // Off-white/Cream for warmth
 
   const serifBold = 'font-serif font-extrabold';
+
+  const router = useRouter()
 
   return (
     <>
@@ -53,12 +57,14 @@ const PremiumEventPlanner = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
+                  onClick={() => router.push('/clubs')}
                   className="px-8 py-4 text-base font-bold uppercase tracking-wider text-white rounded-lg hover:shadow-2xl transition-all transform hover:scale-105"
                   style={{ backgroundColor: secondaryColor }}
                 >
-                  VIEW FEST PORTFOLIO
+                  VIEW ALL CLUBS
                 </button>
                 <button
+                  onClick={() => router.push('/dashboard')}
                   className="px-8 py-4 text-base font-bold uppercase tracking-wider text-white border-2 border-white rounded-lg hover:bg-white hover:text-gray-900 transition-all"
                 >
                   GET STARTED
@@ -131,8 +137,8 @@ const PremiumEventPlanner = () => {
         {/* 6. Footer */}
         <footer className="py-8 md:py-12 border-t border-gray-200" style={{ backgroundColor: backgroundColor }}>
           <div className="container mx-auto px-6 lg:px-12 text-center text-xs md:text-sm tracking-widest uppercase font-light text-gray-500">
-            <p>Ready to plan your next major event? <a href="mailto:inquire@festarchitects.com" className="hover:text-gray-900">START THE CONVERSATION</a></p>
-            <p className="mt-2">&copy; {new Date().getFullYear()} Fest Architects. Partnering with College Excellence.</p>
+            <p>Ready to manage your club? <a href="/dashboard" className="hover:text-gray-900 cursor-pointer">GET STARTED</a></p>
+            <p className="mt-2">&copy; {new Date().getFullYear()} Fest Architects. Empowering Campus Communities.</p>
           </div>
         </footer>
       </div>

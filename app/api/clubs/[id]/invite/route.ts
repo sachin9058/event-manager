@@ -69,7 +69,7 @@ export async function GET(
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
     }
 
-    // Check if user is the creator
+    // check if the user is creater
     if ((club.createdBy as any).clerkId !== userId) {
       return NextResponse.json(
         { error: "Only club creator can view invite links" },
