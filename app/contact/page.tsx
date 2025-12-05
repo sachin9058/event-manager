@@ -140,8 +140,8 @@ export default function ContactPage() {
                   </div>
                   <div className="ml-4">
                     <h3 className="font-semibold text-gray-800 mb-1">Address</h3>
-                    <p className="text-gray-600">Campus Building</p>
-                    <p className="text-gray-600">Your City, State</p>
+                    <p className="text-gray-600">IIT BHU</p>
+                    <p className="text-gray-600">Varanasi</p>
                   </div>
                 </div>
               </div>
