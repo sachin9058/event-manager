@@ -4,6 +4,7 @@ import React, { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Navbar from "@/components/Navbar";
+import ClubAnalytics from "@/components/ClubAnalytics";
 
 // --- THEME DEFINITIONS ---
 const primaryColor = '#70001A'; // Deep Maroon/Wine
@@ -74,6 +75,7 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
     const [inviteLink, setInviteLink] = useState<string | null>(null);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [showCertificateModal, setShowCertificateModal] = useState(false);
+    const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'analytics'>('overview');
     const [certificateForm, setCertificateForm] = useState({
         eventName: '',
         eventDate: '',
@@ -526,8 +528,85 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                     </div>
                 )}
 
+                {/* Tab Navigation */}
+                <div className="bg-white rounded-t-2xl shadow-lg border-b">
+                    <div className="flex space-x-1 p-2">
+                        <button
+                            onClick={() => setActiveTab('overview')}
+                            className={`flex-1 px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
+                                activeTab === 'overview'
+                                    ? 'text-white shadow-md'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                            style={activeTab === 'overview' ? { backgroundColor: primaryColor } : {}}
+                        >
+                            📋 Overview
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('members')}
+                            className={`flex-1 px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
+                                activeTab === 'members'
+                                    ? 'text-white shadow-md'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                            style={activeTab === 'members' ? { backgroundColor: primaryColor } : {}}
+                        >
+                            👥 Members ({club.members.length})
+                        </button>
+                        {(isOwner() || isMember()) && (
+                            <button
+                                onClick={() => setActiveTab('analytics')}
+                                className={`flex-1 px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
+                                    activeTab === 'analytics'
+                                        ? 'text-white shadow-md'
+                                        : 'text-gray-600 hover:bg-gray-100'
+                                }`}
+                                style={activeTab === 'analytics' ? { backgroundColor: primaryColor } : {}}
+                            >
+                                📊 Analytics
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Overview Tab */}
+                {activeTab === 'overview' && (
+                    <section className="bg-white rounded-b-2xl p-6 md:p-8 shadow-xl">
+                        <h2 className={`text-2xl ${serifMedium} mb-4`} style={{ color: primaryColor }}>
+                            Club Overview
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                                <h3 className="text-sm font-semibold text-gray-600 uppercase mb-2">Description</h3>
+                                <p className="text-gray-800">{club.description || "No detailed description provided."}</p>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                                <h3 className="text-sm font-semibold text-gray-600 uppercase mb-2">Details</h3>
+                                <div className="space-y-2">
+                                    <p className="text-sm"><span className="font-medium">Category:</span> {club.category}</p>
+                                    <p className="text-sm"><span className="font-medium">Status:</span> <span className={club.isActive ? 'text-green-600' : 'text-red-600'}>{club.isActive ? 'Active' : 'Inactive'}</span></p>
+                                    <p className="text-sm"><span className="font-medium">Created:</span> {club.createdAt ? new Date(club.createdAt).toLocaleDateString('en-GB') : 'N/A'}</p>
+                                    <p className="text-sm"><span className="font-medium">Total Members:</span> {club.members.length}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                )}
+
+                {/* Analytics Tab */}
+                {activeTab === 'analytics' && (isOwner() || isMember()) && (
+                    <section className="bg-white rounded-b-2xl p-6 md:p-8 shadow-xl">
+                        <ClubAnalytics 
+                            clubId={club._id}
+                            members={club.members}
+                            createdAt={club.createdAt || new Date().toISOString()}
+                        />
+                    </section>
+                )}
+
                 {/* Members Section */}
-                <section className="bg-white rounded-2xl p-6 md:p-8 shadow-xl">
+                {activeTab === 'members' && (
+                    <section className="bg-white rounded-b-2xl p-6 md:p-8 shadow-xl">
                     <h2 className={`text-2xl ${serifMedium} mb-4`} style={{ color: primaryColor }}>
                         Roster: Club Members ({club.members.length})
                     </h2>
@@ -570,6 +649,7 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                         </ul>
                     )}
                 </section>
+                )}
 
                 {error && <p className="text-sm text-red-500 mt-4 p-4 border rounded-lg bg-red-50">{error}</p>}
                 </div>

@@ -190,7 +190,7 @@ export default function JoinClubPage({ params }: { params: Promise<{ token: stri
                                 </p>
                                 <p className="text-sm text-gray-600 mt-1">
                                     <span className="font-medium">Created:</span>{" "}
-                                    {new Date(club.createdAt).toLocaleDateString()}
+                                    {new Date(club.createdAt).toLocaleDateString('en-GB')}
                                 </p>
                             </div>
                         </div>

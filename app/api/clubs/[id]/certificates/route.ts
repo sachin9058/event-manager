@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import connectDB from "@/lib/db";
 import Club from "@/models/Club";
 import { generateCertificate, CertificateData } from "@/lib/certificateGenerator";
@@ -148,13 +148,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get query parameters for preview
     const searchParams = req.nextUrl.searchParams;
-    const eventName = searchParams.get('eventName') || 'Sample Event';
-    const eventDate = searchParams.get('eventDate') || new Date().toLocaleDateString();
-    const collegeName = searchParams.get('collegeName') || 'Sample College';
-    const memberName = searchParams.get('memberName') || 'John Doe';
-    const position = searchParams.get('position') || 'Participant';
+    const isStats = searchParams.get('stats') === 'true';
 
     await connectDB();
 
@@ -162,6 +157,30 @@ export async function GET(
     if (!club) {
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
     }
+
+    // If requesting stats, return certificate statistics
+    if (isStats) {
+      const isMember = club.members.some((m: any) => m.clerkId === userId);
+      const isOwner = (club.createdBy as any).clerkId === userId;
+
+      if (!isMember && !isOwner) {
+        return NextResponse.json({ error: 'Not authorized to view this data' }, { status: 403 });
+      }
+
+      // For now, return mock data since Certificate model doesn't exist yet
+      // In the future, you can create the Certificate model and query it here
+      return NextResponse.json({
+        total: 0,
+        totalEvents: 0,
+      });
+    }
+
+    // Otherwise, generate preview certificate
+    const eventName = searchParams.get('eventName') || 'Sample Event';
+    const eventDate = searchParams.get('eventDate') || new Date().toLocaleDateString();
+    const collegeName = searchParams.get('collegeName') || 'Sample College';
+    const memberName = searchParams.get('memberName') || 'John Doe';
+    const position = searchParams.get('position') || 'Participant';
 
     // Check if user is the creator
     if ((club.createdBy as any).clerkId !== userId) {
@@ -192,9 +211,9 @@ export async function GET(
     });
 
   } catch (error: any) {
-    console.error("Error generating preview certificate:", error);
+    console.error("Error in GET certificates:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to generate preview" },
+      { error: error.message || "Failed to process request" },
       { status: 500 }
     );
   }

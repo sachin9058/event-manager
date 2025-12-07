@@ -99,7 +99,7 @@ export default async function AdminClubDetailPage({ params }: { params: Promise<
                   Created
                 </label>
                 <p className="text-gray-600">
-                  {new Date(club.createdAt).toLocaleDateString()}
+                  {new Date(club.createdAt).toLocaleDateString('en-GB')}
                 </p>
               </div>
 
@@ -108,7 +108,7 @@ export default async function AdminClubDetailPage({ params }: { params: Promise<
                   Last Updated
                 </label>
                 <p className="text-gray-600">
-                  {new Date(club.updatedAt).toLocaleDateString()}
+                  {new Date(club.updatedAt).toLocaleDateString('en-GB')}
                 </p>
               </div>
             </div>
