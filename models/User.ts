@@ -6,6 +6,15 @@ export interface IUser extends Document {
   firstName?: string;
   lastName?: string;
   imageUrl?: string;
+  subscription?: {
+    plan: 'free' | 'basic' | 'premium';
+    status: 'active' | 'cancelled' | 'expired';
+    razorpaySubscriptionId?: string;
+    razorpayCustomerId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    autoRenew?: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +43,26 @@ const UserSchema: Schema<IUser> = new Schema(
     imageUrl: {
       type: String,
       default: '',
+    },
+    subscription: {
+      plan: {
+        type: String,
+        enum: ['free', 'basic', 'premium'],
+        default: 'free',
+      },
+      status: {
+        type: String,
+        enum: ['active', 'cancelled', 'expired'],
+        default: 'active',
+      },
+      razorpaySubscriptionId: String,
+      razorpayCustomerId: String,
+      startDate: Date,
+      endDate: Date,
+      autoRenew: {
+        type: Boolean,
+        default: true,
+      },
     },
   },
   {

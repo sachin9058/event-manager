@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import SubscriptionStatus from "@/components/SubscriptionStatus";
 
 type Club = {
     _id?: string;
@@ -75,9 +76,18 @@ export default function ClubsDashboard() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
             });
+            
+            const responseData = await res.json();
+            
             if (!res.ok) {
-                const body = await res.text();
-                throw new Error(body || "Failed to save club");
+                // Check if it's a plan limit error
+                if (responseData.upgrade) {
+                    if (confirm(`${responseData.error}\n\nWould you like to upgrade your plan now?`)) {
+                        router.push('/pricing');
+                        return;
+                    }
+                }
+                throw new Error(responseData.error || "Failed to save club");
             }
 
             await fetchClubs();
@@ -191,6 +201,11 @@ export default function ClubsDashboard() {
                             {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
                         </div>
                     </form>
+                </section>
+
+                {/* Subscription Status */}
+                <section className="mb-8">
+                    <SubscriptionStatus />
                 </section>
 
                 {/* --- Clubs Listing Section --- */}

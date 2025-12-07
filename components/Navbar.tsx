@@ -12,6 +12,7 @@ const serifBold = 'font-serif font-extrabold';
 const navLinks = [
   { name: 'Home', href: '/' },
   { name: 'All Clubs', href: '/clubs' },
+  { name: 'Pricing', href: '/pricing' },
   { name: 'About', href: '/about' },
   { name: 'Contact', href: '/contact' },
 ];

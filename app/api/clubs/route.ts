@@ -3,6 +3,7 @@ import connectDB from '@/lib/db';
 import Club from '@/models/Club';
 import User from '@/models/User';
 import { currentUser } from '@clerk/nextjs/server';
+import { checkUserPlanLimits } from '@/lib/subscriptionHelper';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,6 +19,16 @@ export async function POST(req: NextRequest) {
 
     if (!dbUser) {
       return NextResponse.json({ error: 'User not found in database' }, { status: 404 });
+    }
+
+    // Check plan limits before creating club
+    try {
+      await checkUserPlanLimits(user.id, 'createClub');
+    } catch (error: any) {
+      return NextResponse.json({ 
+        error: error.message,
+        upgrade: true,
+      }, { status: 403 });
     }
 
     const body = await req.json();
