@@ -4,6 +4,7 @@ import Club from '@/models/Club';
 import User from '@/models/User';
 import { currentUser } from '@clerk/nextjs/server';
 import { checkUserPlanLimits } from '@/lib/subscriptionHelper';
+import { checkUserRole } from '@/lib/roles';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +14,15 @@ export async function POST(req: NextRequest) {
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if user has club-owner or admin role
+    const hasPermission = await checkUserRole(['club-owner', 'admin']);
+    if (!hasPermission) {
+      return NextResponse.json({ 
+        error: 'Only club owners and admins can create clubs. Please upgrade your account to club-owner role.',
+        requiresRole: true,
+      }, { status: 403 });
     }
 
     const dbUser = await User.findOne({ clerkId: user.id });

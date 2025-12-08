@@ -1,4 +1,7 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import QRCode from 'qrcode';
+import fs from 'fs';
+import path from 'path';
 
 export interface CertificateData {
   memberName: string;
@@ -7,6 +10,8 @@ export interface CertificateData {
   eventName: string;
   eventDate: string;
   position?: string; // Optional: e.g., "Participant", "Winner", "Organizer"
+  memberEmail?: string; // For QR code data
+  memberId?: string; // For QR code data
 }
 
 export async function generateCertificate(data: CertificateData): Promise<Uint8Array> {
@@ -28,6 +33,47 @@ export async function generateCertificate(data: CertificateData): Promise<Uint8A
   const gold = rgb(0.78, 0.58, 0.27); // #C89446
   const darkGray = rgb(0.2, 0.2, 0.2);
   
+  // Generate QR code with member information
+  const qrData = JSON.stringify({
+    name: data.memberName,
+    email: data.memberEmail || '',
+    memberId: data.memberId || '',
+    event: data.eventName,
+    club: data.clubName,
+    date: data.eventDate,
+    position: data.position || 'Participant',
+    college: data.collegeName,
+    verified: true
+  });
+  
+  const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
+    width: 120,
+    margin: 1,
+    color: {
+      dark: '#70001A', // burgundy
+      light: '#FFFFFF'
+    }
+  });
+  
+  // Convert QR code data URL to image bytes
+  const qrImageBytes = Buffer.from(qrCodeDataUrl.split(',')[1], 'base64');
+  const qrImage = await pdfDoc.embedPng(qrImageBytes);
+  
+  // Embed IIT BHU logo from file system
+  let iitLogo;
+  try {
+    const logoPath = path.join(process.cwd(), 'public', 'iit-bhu-logo.png');
+    if (fs.existsSync(logoPath)) {
+      const logoBytes = fs.readFileSync(logoPath);
+      iitLogo = await pdfDoc.embedPng(logoBytes);
+      console.log('IIT BHU logo loaded successfully');
+    } else {
+      console.log('IIT BHU logo file not found at:', logoPath);
+    }
+  } catch (error) {
+    console.error('Error loading IIT BHU logo:', error);
+  }
+  
   // Draw border
   const borderMargin = 30;
   page.drawRectangle({
@@ -47,6 +93,36 @@ export async function generateCertificate(data: CertificateData): Promise<Uint8A
     height: height - (borderMargin * 2) - 20,
     borderColor: burgundy,
     borderWidth: 1,
+  });
+  
+  // Draw IIT BHU logo at top left
+  if (iitLogo) {
+    const logoSize = 60;
+    page.drawImage(iitLogo, {
+      x: 50,
+      y: height - 90,
+      width: logoSize,
+      height: logoSize,
+    });
+  }
+  
+  // Draw QR code at bottom left
+  const qrSize = 100;
+  page.drawImage(qrImage, {
+    x: 60,
+    y: 150,
+    width: qrSize,
+    height: qrSize,
+  });
+  
+  // QR code label
+  const qrLabel = 'Scan to verify';
+  page.drawText(qrLabel, {
+    x: 70,
+    y: 140,
+    size: 8,
+    font: timesRomanFont,
+    color: darkGray,
   });
   
   // Title: "CERTIFICATE OF APPRECIATION"

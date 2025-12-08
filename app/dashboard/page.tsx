@@ -5,6 +5,8 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import SubscriptionStatus from "@/components/SubscriptionStatus";
+import RoleManager from "@/components/RoleManager";
+import Loader, { CardSkeleton, ButtonLoader } from "@/components/Loader";
 
 type Club = {
     _id?: string;
@@ -80,6 +82,13 @@ export default function ClubsDashboard() {
             const responseData = await res.json();
             
             if (!res.ok) {
+                // Check if it's a role requirement error
+                if (responseData.requiresRole) {
+                    if (confirm(`${responseData.error}\n\nWould you like to change your role now?`)) {
+                        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                        return;
+                    }
+                }
                 // Check if it's a plan limit error
                 if (responseData.upgrade) {
                     if (confirm(`${responseData.error}\n\nWould you like to upgrade your plan now?`)) {
@@ -139,6 +148,15 @@ export default function ClubsDashboard() {
             {children}
         </button>
     );
+
+    if (!isLoaded || loading) {
+        return (
+            <main className="min-h-screen" style={{ backgroundColor: backgroundColor }}>
+                <Navbar />
+                <Loader fullScreen text="Loading your dashboard..." size="large" />
+            </main>
+        );
+    }
 
     return (
         <main className="min-h-screen" style={{ backgroundColor: backgroundColor }}>
@@ -203,10 +221,11 @@ export default function ClubsDashboard() {
                     </form>
                 </section>
 
-                {/* Subscription Status */}
-                <section className="mb-8">
+                {/* Role and Subscription Management */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <RoleManager />
                     <SubscriptionStatus />
-                </section>
+                </div>
 
                 {/* --- Clubs Listing Section --- */}
                 <section className="bg-white p-6 md:p-8 rounded-3xl shadow-xl">

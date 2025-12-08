@@ -50,12 +50,13 @@ export async function POST(req: NextRequest) {
         firstName: first_name || '',
         lastName: last_name || '',
         imageUrl: image_url || '',
+        role: 'student', // Default role for new users
       };
 
       await User.findOneAndUpdate(
         { clerkId: id },
         userData,
-        { upsert: true, new: true }
+        { upsert: true, new: true, setDefaultsOnInsert: true }
       );
 
       console.log(`User ${eventType}:`, id);

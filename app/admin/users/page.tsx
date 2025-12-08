@@ -87,6 +87,9 @@ export default async function AdminUsersPage() {
                       Email
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Role
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Clubs
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -107,7 +110,7 @@ export default async function AdminUsersPage() {
                     <tr key={user._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-burgundy-500 to-gold-500 rounded-full flex items-center justify-center">
+                          <div className="shrink-0 h-10 w-10 bg-linear-to-br from-burgundy-500 to-gold-500 rounded-full flex items-center justify-center">
                             <span className="text-white font-semibold">
                               {user.firstName?.[0]}{user.lastName?.[0]}
                             </span>
@@ -124,6 +127,16 @@ export default async function AdminUsersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{user.email}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          (user as any).role === 'admin' ? 'bg-red-100 text-red-800' :
+                          (user as any).role === 'club-owner' ? 'bg-purple-100 text-purple-800' :
+                          'bg-blue-100 text-blue-800'
+                        }`}>
+                          {(user as any).role === 'club-owner' ? 'Club Owner' : 
+                           (user as any).role === 'admin' ? 'Admin' : 'Student'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">

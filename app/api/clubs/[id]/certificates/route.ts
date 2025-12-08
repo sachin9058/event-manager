@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import connectDB from "@/lib/db";
 import Club from "@/models/Club";
+import User from "@/models/User";
 import { generateCertificate, CertificateData } from "@/lib/certificateGenerator";
 import { sendEmail, generateCertificateEmailHTML } from "@/lib/emailService";
+import { getUserRole } from "@/lib/roles";
 
 // POST /api/clubs/[id]/certificates - Generate and send certificates to all members
 export async function POST(
@@ -36,10 +38,18 @@ export async function POST(
       return NextResponse.json({ error: "Club not found" }, { status: 404 });
     }
 
-    // Check if user is the creator
-    if ((club.createdBy as any).clerkId !== userId) {
+    const dbUser = await User.findOne({ clerkId: userId });
+    if (!dbUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Check if user is the club owner or admin
+    const userRole = await getUserRole(userId);
+    const isOwner = (club.createdBy as any)._id.equals(dbUser._id);
+    
+    if (!isOwner && userRole !== 'admin') {
       return NextResponse.json(
-        { error: "Only club creator can generate certificates" },
+        { error: "Only club owner or admin can generate certificates" },
         { status: 403 }
       );
     }
@@ -78,6 +88,8 @@ export async function POST(
           eventName,
           eventDate,
           position: position || 'Participant',
+          memberEmail: memberData.email,
+          memberId: memberData._id.toString(),
         };
 
         const pdfBytes = await generateCertificate(certificateData);

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import Loader, { CardSkeleton } from "@/components/Loader";
 
 // Theme colors
 const primaryColor = '#70001A';
@@ -59,10 +60,31 @@ export default function AllClubsPage() {
 
     const filteredClubs = clubs.filter(club => {
         const matchesSearch = club.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            club.description?.toLowerCase().includes(searchQuery.toLowerCase());
+                             club.description?.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesCategory = selectedCategory === "All" || club.category === selectedCategory;
-        return matchesSearch && matchesCategory;
+        return matchesSearch && matchesCategory && club.isActive;
     });
+
+    if (loading) {
+        return (
+            <main className="min-h-screen" style={{ backgroundColor }}>
+                <Navbar />
+                <div className="p-6 md:p-12">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="mb-8">
+                            <div className="h-12 bg-gray-200 rounded w-64 mb-4 animate-pulse" />
+                            <div className="h-6 bg-gray-200 rounded w-96 animate-pulse" />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[1, 2, 3, 4, 5, 6].map(i => (
+                                <CardSkeleton key={i} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main className="min-h-screen" style={{ backgroundColor }}>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Navbar from "@/components/Navbar";
 import ClubAnalytics from "@/components/ClubAnalytics";
+import Loader, { ButtonLoader } from "@/components/Loader";
 
 // --- THEME DEFINITIONS ---
 const primaryColor = '#70001A'; // Deep Maroon/Wine
@@ -79,24 +80,26 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
     const [certificateForm, setCertificateForm] = useState({
         eventName: '',
         eventDate: '',
-        collegeName: '',
+        collegeName: 'Indian Institute of Technology (BHU) Varanasi',
         position: 'Participant',
         selectedMembers: [] as string[],
     });
     const [certificateResults, setCertificateResults] = useState<any>(null);
+    const [userRole, setUserRole] = useState<'student' | 'club-owner' | 'admin'>('student');
 
     useEffect(() => {
         if (!id) return;
         fetchClub();
+        fetchUserRole();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     useEffect(() => {
-        if (club && isOwner()) {
+        if (club && canManageClub()) {
             fetchInviteLink();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [club]);
+    }, [club, userRole]);
 
     async function fetchClub() {
         setLoading(true);
@@ -113,6 +116,18 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
         }
     }
 
+    async function fetchUserRole() {
+        try {
+            const res = await fetch('/api/users/role');
+            if (res.ok) {
+                const data = await res.json();
+                setUserRole(data.role);
+            }
+        } catch (e) {
+            console.error('Error fetching user role:', e);
+        }
+    }
+
     function isMember() {
         if (!user || !club) return false;
         return club.members.some(m => m.clerkId === user.id);
@@ -121,6 +136,11 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
     function isOwner() {
         if (!user || !club) return false;
         return club.createdBy.clerkId === user.id;
+    }
+
+    function canManageClub() {
+        // Only the club owner or admin can manage this specific club
+        return isOwner() || userRole === 'admin';
     }
 
     async function handleJoinLeave() {
@@ -151,6 +171,10 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
     }
 
     async function handleRemoveMember(memberClerkId: string) {
+        if (!canManageClub()) {
+            setError('Only club owner or admin can remove members');
+            return;
+        }
         if (!confirm("Remove this member from the club?")) return;
         setActionLoading(true);
         try {
@@ -169,6 +193,10 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
     }
 
     async function handleDeleteClub() {
+        if (!canManageClub()) {
+            setError('Only club owner or admin can delete this club');
+            return;
+        }
         if (!confirm("Delete this club permanently? This action cannot be undone.")) return;
         setActionLoading(true);
         try {
@@ -187,6 +215,10 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
     }
 
     async function handleGenerateInviteLink() {
+        if (!canManageClub()) {
+            setError('Only club owner or admin can generate invite links');
+            return;
+        }
         setActionLoading(true);
         try {
             const res = await fetch(`/api/clubs/${id}/invite`, { method: "POST" });
@@ -286,8 +318,25 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
         }));
     }
 
-    if (loading) return <div className="p-12 text-lg" style={{ backgroundColor }}>Loading club data...</div>;
-    if (!club) return <div className="p-12 text-lg" style={{ backgroundColor }}>Club not found.</div>;
+    if (loading) {
+        return (
+            <main className="min-h-screen" style={{ backgroundColor }}>
+                <Navbar />
+                <Loader fullScreen text="Loading club details..." size="large" />
+            </main>
+        );
+    }
+    
+    if (!club) {
+        return (
+            <main className="min-h-screen" style={{ backgroundColor }}>
+                <Navbar />
+                <div className="p-12 text-center">
+                    <div className="text-lg font-medium" style={{ color: primaryColor }}>Club not found</div>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main className="min-h-screen" style={{ backgroundColor: backgroundColor }}>
@@ -312,12 +361,17 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                                 <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">
                                     Owner: <span className="font-medium text-gray-700">{isOwner() ? "You (Administrator)" : (club.createdBy.firstName + ' ' + club.createdBy.lastName || club.createdBy.email)}</span>
                                 </p>
+                                {userRole === 'admin' && !isOwner() && (
+                                    <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">
+                                        <span className="font-medium text-purple-600">⚡ Admin Access</span>
+                                    </p>
+                                )}
                             </div>
                         </div>
 
                         {/* Action Buttons */}
                         <div className="text-right flex flex-col space-y-2">
-                            {isOwner() && (
+                            {canManageClub() && (
                                 <>
                                     <PrimaryActionButton
                                         onClick={() => setShowCertificateModal(true)}
@@ -343,9 +397,9 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                                 onClick={handleJoinLeave}
                                 disabled={actionLoading}
                             >
-                                {actionLoading ? "Processing…" : isMember() ? "Leave Club" : "Join Club"}
+                                {actionLoading ? <ButtonLoader /> : isMember() ? "Leave Club" : "Join Club"}
                             </PrimaryActionButton>
-                            {isOwner() && (
+                            {canManageClub() && (
                                 <button
                                     onClick={handleDeleteClub}
                                     className="px-3 py-1 rounded-md border text-red-600 text-xs hover:bg-red-50 transition-colors"
@@ -423,7 +477,7 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                                         value={certificateForm.collegeName}
                                         onChange={(e) => setCertificateForm({ ...certificateForm, collegeName: e.target.value })}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-50"
-                                        placeholder="e.g., ABC University"
+                                        placeholder="Indian Institute of Technology (BHU) Varanasi"
                                     />
                                 </div>
 
@@ -511,7 +565,7 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                                     className="px-6 py-2 rounded-lg text-white font-medium flex-1 disabled:opacity-50"
                                     style={{ backgroundColor: secondaryColor }}
                                 >
-                                    {actionLoading ? "Generating & Sending..." : "Generate & Send Certificates"}
+                                    {actionLoading ? <ButtonLoader /> : "Generate & Send Certificates"}
                                 </button>
                                 <button
                                     onClick={() => {
@@ -520,6 +574,7 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                                         setError(null);
                                     }}
                                     className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                    disabled={actionLoading}
                                 >
                                     Close
                                 </button>
@@ -553,7 +608,7 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                         >
                             👥 Members ({club.members.length})
                         </button>
-                        {(isOwner() || isMember()) && (
+                        {(canManageClub() || isMember()) && (
                             <button
                                 onClick={() => setActiveTab('analytics')}
                                 className={`flex-1 px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
@@ -594,7 +649,7 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                 )}
 
                 {/* Analytics Tab */}
-                {activeTab === 'analytics' && (isOwner() || isMember()) && (
+                {activeTab === 'analytics' && (canManageClub() || isMember()) && (
                     <section className="bg-white rounded-b-2xl p-6 md:p-8 shadow-xl">
                         <ClubAnalytics 
                             clubId={club._id}
@@ -635,7 +690,7 @@ export default function ClubDashboardPage({ params }: { params: Promise<{ id: st
                                         {m.clerkId === club.createdBy.clerkId && <span className="text-xs font-bold px-3 py-1 rounded-full text-white" style={{ backgroundColor: primaryColor }}>Owner</span>}
                                         {m.clerkId === user?.id && <span className="text-xs font-medium text-green-600 ml-2">You</span>}
 
-                                        {isOwner() && m.clerkId !== club.createdBy.clerkId && (
+                                        {canManageClub() && m.clerkId !== club.createdBy.clerkId && (
                                             <DangerButton
                                                 onClick={() => handleRemoveMember(m.clerkId)}
                                                 disabled={actionLoading}

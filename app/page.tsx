@@ -64,7 +64,7 @@ const PremiumEventPlanner = () => {
                   VIEW ALL CLUBS
                 </button>
                 <button
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => router.push('/pricing')}
                   className="px-8 py-4 text-base font-bold uppercase tracking-wider text-white border-2 border-white rounded-lg hover:bg-white hover:text-gray-900 transition-all"
                 >
                   GET STARTED

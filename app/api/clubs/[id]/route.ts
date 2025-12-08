@@ -4,6 +4,7 @@ import Club from '@/models/Club';
 import User from '@/models/User';
 import { currentUser } from '@clerk/nextjs/server';
 import { isAdmin } from '@/lib/isAdmin';
+import { getUserRole } from '@/lib/roles';
 
 export async function GET(
   req: NextRequest,
@@ -79,11 +80,11 @@ export async function PATCH(
 
     if (action === 'remove' && memberId) {
       // Admin or owner can remove members
-      const admin = await isAdmin();
+      const userRole = await getUserRole(user.id);
       const isOwner = club.createdBy.equals(dbUser._id);
       
-      if (!admin && !isOwner) {
-        return NextResponse.json({ error: 'Only owner or admin can remove members' }, { status: 403 });
+      if (userRole === 'student' && !isOwner) {
+        return NextResponse.json({ error: 'Only club owner or admin can remove members' }, { status: 403 });
       }
       const memberToRemove = await User.findOne({ clerkId: memberId });
       if (memberToRemove) {
@@ -93,12 +94,13 @@ export async function PATCH(
       return NextResponse.json({ message: 'Member removed', club }, { status: 200 });
     }
 
-    // Handle club updates (admin or owner)
-    const admin = await isAdmin();
+    // Handle club updates (admin or club owner only)
+    const userRole = await getUserRole(user.id);
     const isOwner = club.createdBy.equals(dbUser._id);
     
-    if (!admin && !isOwner) {
-      return NextResponse.json({ error: 'Only owner or admin can update club' }, { status: 403 });
+    // Only the club owner or admin can update the club
+    if (!isOwner && userRole !== 'admin') {
+      return NextResponse.json({ error: 'Only club owner or admin can update this club' }, { status: 403 });
     }
 
     if (name) club.name = name;

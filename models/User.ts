@@ -6,6 +6,7 @@ export interface IUser extends Document {
   firstName?: string;
   lastName?: string;
   imageUrl?: string;
+  role: 'student' | 'club-owner' | 'admin';
   subscription?: {
     plan: 'free' | 'basic' | 'premium';
     status: 'active' | 'cancelled' | 'expired';
@@ -43,6 +44,12 @@ const UserSchema: Schema<IUser> = new Schema(
     imageUrl: {
       type: String,
       default: '',
+    },
+    role: {
+      type: String,
+      enum: ['student', 'club-owner', 'admin'],
+      default: 'student',
+      required: true,
     },
     subscription: {
       plan: {
